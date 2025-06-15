@@ -13,6 +13,7 @@ struct TimerAttributes: ActivityAttributes {
         var endTime: Date?
         var isPaused: Bool
         var adjustedRemainingTime: TimeInterval?
+        var totalDuration: TimeInterval
     }
     
     var uniqueID: String

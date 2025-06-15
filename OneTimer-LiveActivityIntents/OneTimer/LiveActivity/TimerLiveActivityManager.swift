@@ -31,9 +31,9 @@ final class TimerLiveActivityManager {
         }
     }
     
-    func startLiveActivity(uniqueID: String, endTime: Date) {
+    func startLiveActivity(uniqueID: String, endTime: Date, duration: TimeInterval) {
         let attributes = TimerAttributes(uniqueID: uniqueID)
-        let contentState = TimerAttributes.ContentState(endTime: endTime, isPaused: false, adjustedRemainingTime: nil)
+        let contentState = TimerAttributes.ContentState(endTime: endTime, isPaused: false, adjustedRemainingTime: nil, totalDuration: duration)
         let staleDate = endTime.addingTimeInterval(10)
         
         Task { @MainActor in
@@ -60,32 +60,38 @@ final class TimerLiveActivityManager {
             remaining = activity.content.state.adjustedRemainingTime ?? 0
         }
         
+        let duration = activity.content.state.totalDuration
+        
         let pausedState = TimerAttributes.ContentState(
             endTime: nil,
             isPaused: true,
-            adjustedRemainingTime: remaining
+            adjustedRemainingTime: remaining,
+            totalDuration: duration
         )
         
         Task {
             await activity.update(ActivityContent(state: pausedState, staleDate: nil))
+            print("Pausing Live Activity with remaining: \(remaining), duration: \(duration)")
         }
     }
     
-    func resumeLiveActivity(uniqueID: String, endTime: Date) {
+    func resumeLiveActivity(uniqueID: String, endTime: Date, duration: TimeInterval) {
         guard let activity = self.activity else { return }
         
         let resumedState = TimerAttributes.ContentState(
             endTime: endTime,
             isPaused: false,
-            adjustedRemainingTime: nil
+            adjustedRemainingTime: nil,
+            totalDuration: duration
         )
         
         Task {
             await activity.update(ActivityContent(state: resumedState, staleDate: nil))
+            print("Resuming Live Activity with endTime: \(endTime), duration: \(duration)")
         }
     }
     
-    func startPausedLiveActivity(uniqueID: String, duration: TimeInterval) {
+    func startPausedLiveActivity(uniqueID: String, remainingDuration: TimeInterval, totalDuration: TimeInterval) {
         let isActive = Activity<TimerAttributes>.activities.contains(where: {
             $0.attributes.uniqueID == uniqueID &&
             ($0.activityState == .active || $0.activityState == .stale)
@@ -100,7 +106,8 @@ final class TimerLiveActivityManager {
         let contentState = TimerAttributes.ContentState(
             endTime: nil,
             isPaused: true,
-            adjustedRemainingTime: duration
+            adjustedRemainingTime: remainingDuration,
+            totalDuration: totalDuration
         )
         
         let content = ActivityContent(state: contentState, staleDate: nil)
@@ -119,11 +126,13 @@ final class TimerLiveActivityManager {
     
     func completeLiveActivity(uniqueID: String) {
         guard let activity = self.activity else { return }
+        let duration = activity.content.state.totalDuration
         
         let completedState = TimerAttributes.ContentState(
             endTime: nil,
             isPaused: false,
-            adjustedRemainingTime: 0
+            adjustedRemainingTime: 0,
+            totalDuration: duration
         )
         
         Task {
