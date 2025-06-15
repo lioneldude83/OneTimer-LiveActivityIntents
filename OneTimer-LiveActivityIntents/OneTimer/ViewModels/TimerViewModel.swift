@@ -13,20 +13,21 @@ import UIKit
 @Observable
 class TimerViewModel {
     var timer: TimerState
+    var context: ModelContext?
     
     private var cancellable: AnyCancellable?
-    var context: ModelContext?
-    var selectedSound: Sound {
-        Sound(rawValue: timer.sound ?? "") ?? .chord
-    }
-    
-    var suppressSound = false
     
     init(timer: TimerState, context: ModelContext? = nil) {
         assert(timer.uniqueID == "singleTimer")
         self.timer = timer
         self.context = context
     }
+    
+    var selectedSound: Sound {
+        Sound(rawValue: timer.sound ?? "") ?? .chord
+    }
+    
+    var suppressSound = false
     
     var duration: TimeInterval {
         timer.duration
@@ -49,10 +50,24 @@ class TimerViewModel {
     }
     
     func setDuration(_ duration: TimeInterval, sound: Sound) {
+        // Only set duration if timer is not running
         guard timer.isPaused else { return }
         timer.duration = duration
         timer.remainingTime = duration
         timer.sound = sound.rawValue
+        
+        // If Live Activity is active when setting duration, end it first
+        if TimerLiveActivityManager.shared.isLiveActivityActive(for: timer.uniqueID) {
+            TimerLiveActivityManager.shared.endLiveActivity(uniqueID: timer.uniqueID)
+        }
+        
+        // Save changes to context
+        try? context?.save()
+    }
+    
+    func setSound(sound: Sound) {
+        timer.sound = sound.rawValue
+        try? context?.save()
     }
     
     @MainActor
@@ -84,7 +99,7 @@ class TimerViewModel {
                     // Restore running Live Activity if none found
                     if !TimerLiveActivityManager.shared.isLiveActivityActive(for: timer.uniqueID) {
                         if let endTime = timer.endTime {
-                            TimerLiveActivityManager.shared.startLiveActivity(uniqueID: timer.uniqueID, endTime: endTime)
+                            TimerLiveActivityManager.shared.startLiveActivity(uniqueID: timer.uniqueID, endTime: endTime, duration: timer.duration)
                             print("ViewModel updated: Recreated running Live Activity with remaining time \(timeLeft)")
                         } else {
                             print("Warning: Attempted to start Live Activity for a timer without an end time")
@@ -122,7 +137,7 @@ class TimerViewModel {
             } else if self.timer.remainingTime != self.timer.duration { // Check for reset state
                 // Restore paused Live Activity if none found
                 if !TimerLiveActivityManager.shared.isLiveActivityActive(for: timer.uniqueID) {
-                    TimerLiveActivityManager.shared.startPausedLiveActivity(uniqueID: timer.uniqueID, duration: self.timer.remainingTime)
+                    TimerLiveActivityManager.shared.startPausedLiveActivity(uniqueID: timer.uniqueID, remainingDuration: self.timer.remainingTime, totalDuration: self.timer.duration)
                     print("ViewModel update: Recreated paused Live Activity with remaining time \(timer.remainingTime)")
                 }
             }
@@ -140,15 +155,20 @@ class TimerViewModel {
             timer.endTime = Date().addingTimeInterval(timer.duration)
             
             guard let endTime = timer.endTime else { return }
+            let duration = timer.duration
             
-            TimerLiveActivityManager.shared.startLiveActivity(uniqueID: timer.uniqueID, endTime: endTime)
+            // Start Live Activity
+            TimerLiveActivityManager.shared.startLiveActivity(uniqueID: timer.uniqueID, endTime: endTime, duration: duration)
+            
         } else {
             // Resume timer
             timer.endTime = Date().addingTimeInterval(timer.remainingTime)
             
             guard let endTime = timer.endTime else { return }
+            let duration = timer.duration
             
-            TimerLiveActivityManager.shared.resumeLiveActivity(uniqueID: timer.uniqueID, endTime: endTime)
+            // Resume Live Activity
+            TimerLiveActivityManager.shared.resumeLiveActivity(uniqueID: timer.uniqueID, endTime: endTime, duration: duration)
         }
         timer.isPaused = false
         
@@ -182,6 +202,7 @@ class TimerViewModel {
         
         // Cancel Timer
         cancellable?.cancel()
+        cancellable = nil
         // Cancel Notification
         NotificationManager.shared.cancelNotification(id: timer.uniqueID)
         try? context?.save()
@@ -193,6 +214,7 @@ class TimerViewModel {
     
     @MainActor
     func reset() {
+        guard timer.remainingTime != timer.duration else { return }
         timer.isPaused = true
         timer.remainingTime = timer.duration // Reset duration
         timer.endTime = nil // Clear end time
@@ -200,6 +222,7 @@ class TimerViewModel {
         
         // Cancel Timer
         cancellable?.cancel()
+        cancellable = nil
         // Cancel Notification
         NotificationManager.shared.cancelNotification(id: timer.uniqueID)
         try? context?.save()
@@ -221,8 +244,10 @@ class TimerViewModel {
     }
     
     private func tick() {
+        // Ensure timer is actively running, end time is not nil, else cancel the Combine timer
         guard !timer.isPaused, let endTime = timer.endTime else {
             cancellable?.cancel()
+            cancellable = nil
             return
         }
         
@@ -256,6 +281,7 @@ class TimerViewModel {
         timer.endTime = nil
         timer.startTime = nil
         cancellable?.cancel()
+        cancellable = nil
         
         let state = UIApplication.shared.applicationState
         if !suppressSound, state == .active || state == .inactive {
