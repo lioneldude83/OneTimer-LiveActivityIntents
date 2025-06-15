@@ -35,6 +35,11 @@ struct PauseTimerIntent: LiveActivityIntent {
             throw TimerIntentsError.timerNotFound
         }
         
+        guard !timer.isPaused else {
+            print("Pause Timer Intent: Timer is already paused")
+            throw TimerIntentsError.timerWrongMode
+        }
+        
         let pauseTime = Date()
         timer.isPaused = true
         timer.remainingTime = timer.endTime?.timeIntervalSince(pauseTime) ?? timer.remainingTime
@@ -47,6 +52,7 @@ struct PauseTimerIntent: LiveActivityIntent {
         
         // Pause Live Activity
         TimerLiveActivityManager.shared.pauseLiveActivity(uniqueID: uniqueID)
+        print("Pause Timer Intent: Live Activity paused")
         
         // Post notification for "OneTimerIntentsNotify"
         NotificationCenter.default.post(name: NSNotification.Name("OneTimerIntentsNotify"), object: nil)
@@ -78,6 +84,11 @@ struct ResumeTimerIntent: LiveActivityIntent {
         guard let timer = try context.fetch(descriptor).first else {
             print("Resume Timer Intent: No timer found")
             throw TimerIntentsError.timerNotFound
+        }
+        
+        guard timer.isPaused else {
+            print("Resume Timer Intent: Timer is already running")
+            throw TimerIntentsError.timerWrongMode
         }
         
         let resumeTime = Date()
@@ -113,7 +124,8 @@ struct ResumeTimerIntent: LiveActivityIntent {
         try context.save()
         
         // Resume Live Activity
-        TimerLiveActivityManager.shared.resumeLiveActivity(uniqueID: timer.uniqueID, endTime: endTime)
+        TimerLiveActivityManager.shared.resumeLiveActivity(uniqueID: timer.uniqueID, endTime: endTime, duration: timer.duration)
+        print("Resume Timer Intent: Live Activity resumed")
         
         // Post notification for "OneTimerIntentsNotify"
         NotificationCenter.default.post(name: NSNotification.Name("OneTimerIntentsNotify"), object: nil)
@@ -147,6 +159,11 @@ struct CancelTimerIntent: LiveActivityIntent {
             throw TimerIntentsError.timerNotFound
         }
         
+        guard timer.remainingTime != timer.duration else {
+            print("Cancel Timer Intent: Timer already reset")
+            throw TimerIntentsError.timerAlreadyReset
+        }
+        
         timer.isPaused = true
         timer.remainingTime = timer.duration // Reset duration
         timer.endTime = nil
@@ -159,6 +176,7 @@ struct CancelTimerIntent: LiveActivityIntent {
         
         // End Live Activity
         TimerLiveActivityManager.shared.endLiveActivity(uniqueID: timer.uniqueID)
+        print("Cancel Timer Intent: Live Activity cancelled")
         
         // Post notification for "OneTimerIntentsNotify"
         NotificationCenter.default.post(name: NSNotification.Name("OneTimerIntentsNotify"), object: nil)

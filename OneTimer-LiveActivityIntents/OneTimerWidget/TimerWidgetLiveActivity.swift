@@ -18,26 +18,25 @@ struct TimerWidgetLiveActivity: Widget {
                     Button(intent: PauseTimerIntent()) {
                         ZStack {
                             Circle()
-                                .fill(Color.orange.opacity(0.8))
-                                .frame(width: 52, height: 52)
+                                .fill(Color.orange.opacity(0.5))
+                                .frame(width: 50, height: 50)
                             Image(systemName: "pause.fill")
                                 .font(.system(size: 24))
-                                .foregroundColor(.white)
+                                .foregroundColor(.orange)
                         }
                         .transition(.opacity.combined(with: .scale(scale: 0.85)))
                     }
                     .buttonStyle(.plain)
                     .animation(.spring, value: context.state.isPaused)
-                    
                 } else {
                     Button(intent: ResumeTimerIntent()) {
                         ZStack {
                             Circle()
-                                .fill(Color.green.opacity(0.8))
-                                .frame(width: 52, height: 52)
+                                .fill(Color.green.opacity(0.5))
+                                .frame(width: 50, height: 50)
                             Image(systemName: "play.fill")
                                 .font(.system(size: 24))
-                                .foregroundColor(.white)
+                                .foregroundColor(.green)
                         }
                         .transition(.opacity.combined(with: .scale(scale: 0.85)))
                     }
@@ -49,10 +48,10 @@ struct TimerWidgetLiveActivity: Widget {
                 Button(intent: CancelTimerIntent()) {
                     ZStack {
                         Circle()
-                            .fill(Color.gray.opacity(0.8))
-                            .frame(width: 52, height: 52)
+                            .fill(Color.gray.opacity(0.6))
+                            .frame(width: 50, height: 50)
                         Image(systemName: "xmark")
-                            .font(.system(size: 24))
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(.white)
                     }
                 }
@@ -63,9 +62,9 @@ struct TimerWidgetLiveActivity: Widget {
                 VStack(alignment: .trailing) {
                     // Label Display
                     Text("Timer")
-                        .font(.headline)
-                        .foregroundColor(.white)
+                        .font(.body)
                         .lineLimit(1)
+                        .foregroundColor(.white)
                     
                     // Timer Display
                     TimerWidgetTextView(
@@ -73,16 +72,17 @@ struct TimerWidgetLiveActivity: Widget {
                         isPaused: context.state.isPaused,
                         adjustedRemainingTime: context.state.adjustedRemainingTime
                     )
-                    .frame(width: 90, alignment: .trailing)
-                    .font(.title2)
+                    .font(.title)
                     .monospacedDigit()
-                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .multilineTextAlignment(.trailing)
+                    .frame(width: 90, alignment: .trailing)
+                    .foregroundColor(.white)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .activityBackgroundTint(Color.cyan)
+            .padding()
+            .activityBackgroundTint(Color.black.opacity(0.8))
             .activitySystemActionForegroundColor(Color.white)
             
         } dynamicIsland: { context in
@@ -94,11 +94,11 @@ struct TimerWidgetLiveActivity: Widget {
                             Button(intent: PauseTimerIntent()) {
                                 ZStack {
                                     Circle()
-                                        .fill(Color.orange.opacity(0.8))
-                                        .frame(width: 52, height: 52)
+                                        .fill(Color.orange.opacity(0.5))
+                                        .frame(width: 50, height: 50)
                                     Image(systemName: "pause.fill")
                                         .font(.system(size: 24))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.orange)
                                 }
                                 .transition(.opacity.combined(with: .scale(scale: 0.85)))
                             }
@@ -108,11 +108,11 @@ struct TimerWidgetLiveActivity: Widget {
                             Button(intent: ResumeTimerIntent()) {
                                 ZStack {
                                     Circle()
-                                        .fill(Color.green.opacity(0.8))
-                                        .frame(width: 52, height: 52)
+                                        .fill(Color.green.opacity(0.5))
+                                        .frame(width: 50, height: 50)
                                     Image(systemName: "play.fill")
                                         .font(.system(size: 24))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.green)
                                 }
                                 .transition(.opacity.combined(with: .scale(scale: 0.85)))
                             }
@@ -124,25 +124,27 @@ struct TimerWidgetLiveActivity: Widget {
                         Button(intent: CancelTimerIntent()) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.gray.opacity(0.8))
-                                    .frame(width: 52, height: 52)
+                                    .fill(Color.gray.opacity(0.6))
+                                    .frame(width: 50, height: 50)
                                 Image(systemName: "xmark")
-                                    .font(.system(size: 24))
+                                    .font(.system(size: 18, weight: .semibold))
                                     .foregroundColor(.white)
                             }
                         }
                         .buttonStyle(.plain)
                     }
+                    .offset(x: -2)
+                    // No padding in dynamic island expanded leading
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing) {
+                    HStack(alignment: .bottom) {
                         // Label Display
                         Text("Timer")
-                            .font(.headline)
+                            .font(.body)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80, alignment: .bottom)
                             .foregroundColor(.cyan)
-                            .minimumScaleFactor(0.7)
-                            .lineLimit(1)
-                            .frame(width: 100, alignment: .trailing)
+                            .offset(y: -2)
                         
                         // Timer Display
                         TimerWidgetTextView(
@@ -150,19 +152,51 @@ struct TimerWidgetLiveActivity: Widget {
                             isPaused: context.state.isPaused,
                             adjustedRemainingTime: context.state.adjustedRemainingTime
                         )
-                        .font(.title)
+                        .font(.largeTitle)
                         .monospacedDigit()
-                        .frame(width: 100, alignment: .trailing)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                         .multilineTextAlignment(.trailing)
+                        .frame(width: 100, alignment: .bottom)
+                        .foregroundColor(.cyan)
                     }
-                    .padding(.trailing, 8)
+                    .padding(.trailing, 4)
+                    .frame(height: 50)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     // Empty
                 }
             } compactLeading: {
-                Image(systemName: "timer")
-                    .foregroundColor(context.state.isPaused ? .gray : .orange)
+                Group {
+                    if context.state.isPaused {
+                        let remaining = context.state.endTime?.timeIntervalSince1970 ?? context.state.adjustedRemainingTime
+                        
+                        ProgressView(
+                            value: remaining,
+                            total: context.state.totalDuration,
+                            label: { EmptyView() },
+                            currentValueLabel: {
+                                Image(systemName: "play.fill").scaleEffect(0.85)
+                            }
+                        )
+                    } else {
+                        let end = context.state.endTime! // Force unwrap endTime
+                        let totalDuration = context.state.totalDuration
+                        let start = end.addingTimeInterval(-totalDuration)
+                        
+                        ProgressView(
+                            timerInterval: start...end,
+                            countsDown: true,
+                            label: { EmptyView() },
+                            currentValueLabel: {
+                                Image(systemName: "pause.fill").scaleEffect(0.85)
+                            }
+                        )
+                    }
+                }
+                .progressViewStyle(.circular)
+                .foregroundStyle(.cyan)
+                .tint(.cyan)
             } compactTrailing: {
                 // Timer Display in the compact trailing part of Dynamic Island
                 TimerWidgetTextView(
@@ -170,17 +204,40 @@ struct TimerWidgetLiveActivity: Widget {
                     isPaused: context.state.isPaused,
                     adjustedRemainingTime: context.state.adjustedRemainingTime
                 )
-                .frame(width: 52)
-                .minimumScaleFactor(0.65)
-            } minimal: {
-                TimerWidgetTextView(
-                    endTime: context.state.endTime,
-                    isPaused: context.state.isPaused,
-                    adjustedRemainingTime: context.state.adjustedRemainingTime,
-                    useMinimalFormat: true
-                )
                 .lineLimit(1)
-                .minimumScaleFactor(0.5)
+                .minimumScaleFactor(0.65)
+                .frame(width: 52)
+            } minimal: {
+                Group {
+                    if context.state.isPaused {
+                        let remaining = context.state.endTime?.timeIntervalSince1970 ?? context.state.adjustedRemainingTime
+                        
+                        ProgressView(
+                            value: remaining,
+                            total: context.state.totalDuration,
+                            label: { EmptyView() },
+                            currentValueLabel: {
+                                Image(systemName: "play.fill").scaleEffect(0.85)
+                            }
+                        )
+                    } else {
+                        let end = context.state.endTime!
+                        let totalDuration = context.state.totalDuration
+                        let start = end.addingTimeInterval(-totalDuration)
+                        
+                        ProgressView(
+                            timerInterval: start...end,
+                            countsDown: true,
+                            label: { EmptyView() },
+                            currentValueLabel: {
+                                Image(systemName: "pause.fill").scaleEffect(0.85)
+                            }
+                        )
+                    }
+                }
+                .progressViewStyle(.circular)
+                .foregroundStyle(.cyan)
+                .tint(.cyan)
             }
             .keylineTint(Color.cyan)
         }
@@ -196,17 +253,14 @@ struct TimerWidgetTextView: View {
     var body: some View {
         if let endTime = endTime, !isPaused {
             Text(timerInterval: Date()...endTime, countsDown: true)
-                .foregroundColor(.white)
         } else if let remaining = adjustedRemainingTime, remaining <= 0 {
             Text("Done")
-                .foregroundColor(.white)
         } else if let remaining = adjustedRemainingTime {
             Text(
                 useMinimalFormat
                 ? formatTimeMinimal(remaining)
                 : formatTimeLiveRoundUp(remaining)
             )
-            .foregroundColor(.white)
         } else {
             Text("Paused")
         }
@@ -256,7 +310,8 @@ extension TimerAttributes.ContentState {
         TimerAttributes.ContentState(
             endTime: Date().addingTimeInterval(600),
             isPaused: true,
-            adjustedRemainingTime: 600
+            adjustedRemainingTime: 600,
+            totalDuration: 600
         )
     }
     
@@ -264,7 +319,8 @@ extension TimerAttributes.ContentState {
         TimerAttributes.ContentState(
             endTime: Date().addingTimeInterval(1800),
             isPaused: false,
-            adjustedRemainingTime: 1200
+            adjustedRemainingTime: 1200,
+            totalDuration: 1800
         )
     }
 }
@@ -276,7 +332,7 @@ extension TimerAttributes.ContentState {
     TimerAttributes.ContentState.state2
 }
 
-#Preview("Dynamic Island", as: .dynamicIsland(.compact), using: TimerAttributes.preview) {
+#Preview("Dynamic Island", as: .dynamicIsland(.expanded), using: TimerAttributes.preview) {
     TimerWidgetLiveActivity()
 } contentStates: {
     TimerAttributes.ContentState.state1
