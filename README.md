@@ -1,5 +1,9 @@
 # OneTimer-LiveActivityIntents
 
+## MyChronoPro
+
+Download [MyChronoPro](https://apps.apple.com/us/app/mychronopro/id6746975883) on the App Store now!
+
 ## Documentation
 
 Completed on May 22, 2025.
